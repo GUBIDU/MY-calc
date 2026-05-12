@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aion2角色属性收益计算 - by bulanger66</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #1a1a2e; color: #e0e0e0; min-height: 100vh; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+h1 { text-align: center; color: #ffd700; margin-bottom: 24px; font-size: 24px; }
+.main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } }
+
+.card { background: #16213e; border-radius: 12px; padding: 20px; border: 1px solid #2a3a5e; }
+.card h2 { color: #ffd700; font-size: 18px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #2a3a5e; }
+.card h3 { color: #ffd700; font-size: 15px; margin: 16px 0 10px; }
+
+.form-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.form-row label { min-width: 160px; font-size: 14px; color: #b0b0d0; }
+.form-row .note { font-size: 12px; color: #707090; margin-left: 8px; }
+
+input[type="number"] { width: 120px; padding: 6px 10px; border: 2px solid #3a4a6e; border-radius: 6px; background: #1e2d4a; color: #e0e0e0; font-size: 14px; text-align: right; transition: all 0.2s; }
+input[type="number"]:focus { outline: none; border-color: #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.3); }
+input.yellow { background: #4a3f00; border-color: #ffd700; color: #ffd700; font-weight: bold; }
+input.result { background: #1a2a1a; border-color: #4a7a4a; color: #7dff7d; font-weight: bold; pointer-events: none; }
+.pct-suffix { color: #ffd700; font-weight: bold; font-size: 14px; margin-left: 4px; }
+.pct-wrap { display: inline-flex; align-items: center; }
+
+.result-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 8px 12px; background: #0f1a2e; border-radius: 8px; flex-wrap: wrap; }
+.result-row .attr-name { min-width: 160px; font-size: 14px; color: #ffd700; font-weight: bold; }
+.result-row .increment { font-size: 13px; color: #b0b0d0; }
+.result-row .benefit { font-size: 15px; color: #7dff7d; font-weight: bold; margin-left: auto; }
+.result-row .benefit-label { font-size: 12px; color: #707090; }
+
+.section-desc { font-size: 13px; color: #9090b0; margin-bottom: 12px; line-height: 1.6; padding: 10px; background: #0f1a2e; border-radius: 8px; border-left: 3px solid #ffd700; }
+
+.benefit-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.benefit-table th { background: #1e2d4a; color: #ffd700; padding: 8px 12px; text-align: left; font-size: 13px; border-bottom: 2px solid #2a3a5e; }
+.benefit-table td { padding: 8px 12px; border-bottom: 1px solid #2a3a5e; font-size: 13px; }
+.benefit-table tr:hover { background: #1a2a4a; }
+.benefit-table .benefit-val { color: #7dff7d; font-weight: bold; text-align: right; }
+.benefit-table .inc-val { color: #ffd700; text-align: right; }
+
+.warning-box { margin-top: 16px; padding: 12px; background: #2a1a0a; border: 1px solid #5a3a0a; border-radius: 8px; font-size: 12px; color: #d0a040; line-height: 1.6; }
+
+.footer-note { margin-top: 20px; text-align: center; font-size: 12px; color: #505070; }
+
+.author-bar {
+  background: linear-gradient(135deg, #1e2d4a 0%, #1a2a4a 100%);
+  border: 1px solid #2a3a5e;
+  border-radius: 10px;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.author-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.author-name {
+  color: #ffd700;
+  font-size: 15px;
+  font-weight: bold;
+}
+.author-divider {
+  color: #3a4a6e;
+  font-size: 14px;
+}
+.author-contact {
+  color: #b0b0d0;
+  font-size: 14px;
+}
+@media (max-width: 600px) {
+  .author-info {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .author-divider {
+    display: none;
+  }
+}
+
+.cta-card {
+  background: linear-gradient(135deg, #1a2a1a 0%, #16213e 100%);
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 24px;
+  text-align: center;
+}
+.cta-title {
+  color: #ffd700;
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.cta-desc {
+  color: #b0b0d0;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.cta-wechat {
+  display: inline-block;
+  background: #0f1a2e;
+  border: 1px solid #ffd700;
+  border-radius: 8px;
+  padding: 12px 24px;
+  margin-bottom: 16px;
+}
+.cta-wechat-text {
+  color: #e0e0e0;
+  font-size: 15px;
+  display: block;
+}
+.cta-wechat-text strong {
+  color: #ffd700;
+  font-size: 16px;
+}
+.cta-wechat-note {
+  color: #9090b0;
+  font-size: 13px;
+  margin-top: 4px;
+  display: block;
+}
+.cta-benefits {
+  display: inline-block;
+  text-align: left;
+  margin-top: 8px;
+}
+.cta-benefit-item {
+  color: #7dff7d;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.save-section {
+  margin-top: 20px;
+  padding: 16px;
+  background: #0f1a2e;
+  border-radius: 10px;
+  border: 1px solid #2a3a5e;
+}
+.save-section h3 {
+  color: #ffd700;
+  font-size: 15px;
+  margin: 0 0 12px 0;
+}
+.save-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.save-name-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #3a4a6e;
+  border-radius: 6px;
+  background: #1e2d4a;
+  color: #e0e0e0;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+.save-name-input:focus {
+  outline: none;
+  border-color: #ffd700;
+}
+.save-name-input::placeholder {
+  color: #505070;
+}
+.btn-save {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #4a3f00 0%, #3a2f00 100%);
+  border: 2px solid #ffd700;
+  border-radius: 6px;
+  color: #ffd700;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.btn-save:hover {
+  background: linear-gradient(135deg, #5a4f00 0%, #4a3f00 100%);
+  box-shadow: 0 0 10px rgba(255,215,0,0.3);
+}
+.preset-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+.preset-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #16213e;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+}
+.preset-item:hover {
+  background: #1a2a4a;
+}
+.preset-info {
+  flex: 1;
+  min-width: 0;
+}
+.preset-name {
+  color: #ffd700;
+  font-size: 14px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preset-time {
+  color: #707090;
+  font-size: 11px;
+  margin-top: 2px;
+}
+.btn-load {
+  padding: 5px 14px;
+  background: #1a2a1a;
+  border: 1px solid #4a7a4a;
+  border-radius: 5px;
+  color: #7dff7d;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.btn-load:hover {
+  background: #2a3a2a;
+}
+.btn-delete {
+  padding: 5px 14px;
+  background: #2a1a1a;
+  border: 1px solid #5a2a2a;
+  border-radius: 5px;
+  color: #ff6b6b;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.btn-delete:hover {
+  background: #3a2a2a;
+}
+.preset-empty {
+  text-align: center;
+  color: #505070;
+  font-size: 13px;
+  padding: 16px 0;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Aion2角色属性收益计算 - 网页版</h1>
+
+  <div class="author-bar">
+    <div class="author-info">
+      <span class="author-name">👤 作者：不浪儿</span>
+      <span class="author-divider">|</span>
+      <span class="author-contact">🎮 抖音/B站 搜索同名获取更多游戏攻略</span>
+      <span class="author-divider">|</span>
+      <span class="author-contact">📱 微信：bulanger66</span>
+    </div>
+  </div>
+
+  <div class="save-section">
+    <h3>💾 角色管理</h3>
+    <div class="save-controls">
+      <input type="text" id="saveName" class="save-name-input" placeholder="角色名称（如：杀星1）" maxlength="20">
+      <button class="btn-save" onclick="savePreset()">💾 保存</button>
+    </div>
+    <div class="preset-list" id="presetList">
+      <div class="preset-empty">暂无保存的角色</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <!-- 第一步 -->
+    <div class="card">
+      <h2>第一步：计算装备攻击力、其他攻击力</h2>
+      <p class="section-desc">①装备全穿将面板攻击力和攻击力增加%填入；②把装备全脱再把面板攻击力和攻击力增加%填入；③攻击力增加%=威力部分+破坏部分+武器臂甲首饰突破部分+部分防具词条部分，别漏了！</p>
+
+      <div class="form-row">
+        <label>穿装备面板攻击力</label>
+        <input type="number" id="f13" class="yellow" value="8000" step="1" oninput="calcAll()">
+        <span class="note">按面板填写</span>
+      </div>
+      <div class="form-row">
+        <label>穿装备攻击力增加%</label>
+        <span class="pct-wrap"><input type="number" id="f14" class="yellow" value="95" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+        <span class="note">威力，破坏，装备突破，装备词条</span>
+      </div>
+      <div class="form-row">
+        <label>装备全脱面板攻击力</label>
+        <input type="number" id="f15" class="yellow" value="800" step="1" oninput="calcAll()">
+        <span class="note">按面板填写</span>
+      </div>
+      <div class="form-row">
+        <label>装备全脱攻击力增加%</label>
+        <span class="pct-wrap"><input type="number" id="f16" class="yellow" value="25.1" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+        <span class="note">威力，破坏</span>
+      </div>
+      <div class="form-row">
+        <label>最大攻击力</label>
+        <input type="number" id="f17" class="yellow" value="20" step="1" oninput="calcAll()">
+        <span class="note">宠物盘，守护力</span>
+      </div>
+
+      <h3>计算结果</h3>
+      <div class="result-row">
+        <span class="attr-name">装备攻击力</span>
+        <input type="text" id="f11" class="result" value="3464" readonly>
+        <span class="note">所有装备上的攻击力</span>
+      </div>
+      <div class="result-row">
+        <span class="attr-name">额外攻击力</span>
+        <input type="text" id="f12" class="result" value="630" readonly>
+        <span class="note">包含职业基础攻击力</span>
+      </div>
+    </div>
+
+    <!-- 第二步 -->
+    <div class="card">
+      <h2>第二步：计算收益</h2>
+      <p class="section-desc">填入标黄项，自动计算各属性收益提升%</p>
+
+      <h3>基础属性（按面板填写）</h3>
+      <div class="form-row">
+        <label>伤害增幅</label>
+        <span class="pct-wrap"><input type="number" id="l13" class="yellow" value="100" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+        <span class="note">PVE伤害/伤害/首领伤害/种族伤害增幅（按5%）相加填入，队友buff和boss耐性视作相互抵消方便计算</span>
+      </div>
+      <div class="form-row">
+        <label>强击</label>
+        <span class="pct-wrap"><input type="number" id="l14" class="yellow" value="45.8" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+        <span class="note">计算中会扣除boss强击抵抗30%</span>
+      </div>
+      <div class="form-row">
+        <label>暴击伤害增幅</label>
+        <span class="pct-wrap"><input type="number" id="l15" class="yellow" value="61.7" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+      </div>
+      <div class="form-row">
+        <label>暴击率</label>
+        <span class="pct-wrap"><input type="number" id="l16" class="yellow" value="80" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+        <span class="note">80%是游戏软上限</span>
+      </div>
+      <div class="form-row">
+        <label>多段打击</label>
+        <span class="pct-wrap"><input type="number" id="l17" class="yellow" value="28.2" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+        <span class="note">技能自带多段打击，收益比计算值更低</span>
+      </div>
+      <div class="form-row">
+        <label>完美</label>
+        <span class="pct-wrap"><input type="number" id="l18" class="yellow" value="12" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+      </div>
+      <div class="form-row">
+        <label>武器伤害增幅基础</label>
+        <span class="pct-wrap"><input type="number" id="l21" class="yellow" value="45" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+      </div>
+      <div class="form-row">
+        <label>波动攻击力</label>
+        <input type="number" id="l22" class="yellow" value="119" step="1" oninput="calcAll()">
+        <span class="note">武器最大攻击力-武器最小攻击力+最大攻击力</span>
+      </div>
+      <div class="form-row">
+        <label>PVE/首领攻击力</label>
+        <input type="number" id="l23" class="yellow" value="219" step="1" oninput="calcAll()">
+        <span class="note">PVE攻击力+首领攻击力</span>
+      </div>
+
+      <h3>属性增量（黄格填入增量）</h3>
+      <table class="benefit-table">
+        <thead>
+          <tr><th>属性</th><th>增量</th><th>伤害收益提升%</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1. 伤害增幅</td>
+            <td><span class="pct-wrap"><input type="number" id="l27" class="yellow" value="0.3" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
+            <td class="benefit-val" id="m27">-</td>
+          </tr>
+          <tr>
+            <td>2. 强击</td>
+            <td><span class="pct-wrap"><input type="number" id="l30" class="yellow" value="0.3" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
+            <td class="benefit-val" id="m30">-</td>
+          </tr>
+          <tr>
+            <td>3. 暴击伤害增幅</td>
+            <td><span class="pct-wrap"><input type="number" id="l33" class="yellow" value="5.5" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
+            <td class="benefit-val" id="m33">-</td>
+          </tr>
+          <tr>
+            <td>4. 多段打击</td>
+            <td><span class="pct-wrap"><input type="number" id="l37" class="yellow" value="8.2" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
+            <td class="benefit-val" id="m37">-</td>
+          </tr>
+          <tr>
+            <td>5. 武器伤害增幅</td>
+            <td><span class="pct-wrap"><input type="number" id="l40" class="yellow" value="1" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
+            <td class="benefit-val" id="m40">-</td>
+          </tr>
+          <tr>
+            <td>6. 额外攻击力</td>
+            <td><input type="number" id="l49" class="yellow" value="30" step="1" oninput="calcAll()" style="width:90px"></td>
+            <td class="benefit-val" id="m49">-</td>
+          </tr>
+          <tr>
+            <td>7. 装备攻击力</td>
+            <td><input type="number" id="l58" class="yellow" value="32" step="1" oninput="calcAll()" style="width:90px"></td>
+            <td class="benefit-val" id="m58">-</td>
+          </tr>
+          <tr>
+            <td>8. PVE攻击力</td>
+            <td><input type="number" id="l67" class="yellow" value="30" step="1" oninput="calcAll()" style="width:90px"></td>
+            <td class="benefit-val" id="m67">-</td>
+          </tr>
+          <tr>
+            <td>9. 攻击力增加%</td>
+            <td><span class="pct-wrap"><input type="number" id="l77" class="yellow" value="1" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
+            <td class="benefit-val" id="m77">-</td>
+          </tr>
+          <tr>
+            <td>10. 最大攻击力</td>
+            <td><input type="number" id="l87" class="yellow" value="30" step="1" oninput="calcAll()" style="width:90px"></td>
+            <td class="benefit-val" id="m87">-</td>
+          </tr>
+          <tr>
+            <td>11. 完美</td>
+            <td><span class="pct-wrap"><input type="number" id="l96" class="yellow" value="7.5" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
+            <td class="benefit-val" id="m96">-</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="warning-box">
+        <strong>注意须知：</strong><br>
+        第5-10项算出来的收益提升%还不是最终伤害提升%，完整的伤害公式还需加入技能固定基础值，技能倍率，目标防御值和贯穿值等，但同目标下并不影响在抉择属性时的参考价值，并且以10层凯西的测试结果来看实战更接近理论值，每1%或每10点攻击力误差小于0.05%。完整公式查看文档《伤害计算完整公式推导文档V2.1》
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-card">
+    <div class="cta-title">💬 本工具为粉丝群专属福利</div>
+    <p class="cta-desc">最新版本网址+更多实用工具+技术答疑</p>
+    <div class="cta-wechat">
+      <span class="cta-wechat-text">👉 添加微信 <strong>bulanger66</strong></span>
+      <span class="cta-wechat-note">备注"塔2"进粉丝群</span>
+    </div>
+  </div>
+
+  <p class="footer-note">Aion2角色属性收益计算 © 不浪儿 | 粉丝群专属工具</p>
+</div>
+
+<script>
+function _0x467b(){const _0x5ec8af=['swrjshi','yKPiDwy','ENLwt2e','y2vPBa','CevTvha','quXZDKK','nZG3nde2mhvRA3HfzW','Btq5','Dgv4DenVBNrLBG','BtmZ','tMf4sxi','zJe2','yu9uDeu','BdG3','ueTYq0W','CwPqzMC','BdiX','DK9hteu','Bde4','yxbWBhK','BtmW','Bde3','rvnhuui','Btu4','ntmYnJe3ENnrD1PP','zJe3','qNLjza','sKT6txa','shr4yue','swDly0e','C2PZr0W','zJeZ','CM4GDgHPCYiPka','zxHJzxb0Aw9U','Bti3','yMLUza','BtK2','uhfovu4','teDYA3K','rgzUuxO','zJe0','rLzOEuO','z2v0rwXLBwvUDa','Aw5MBW','E30Uy29UC3rYDq','reDTzvy','BfLmwuK','B25ItKG','zJe1','y29UC29Szq','BdK2','y29UC3rYDwn0BW','q01jshq','Bdi3','zJeY','BdmW','C0HHrK8','x19WCM90B19F','BvP4zLG','r3vvEMK','ywPfsgm','C2f3CxO','ndC4mZK0mgLNwNbItq','A2n6Bgu','rfjfqMG','C1zLs2y','BdC3','ndG1nZG0neLHv0vtCq','nw1JDgnota','sgfcy3u','nZe0mduYmMfUqMfftW','BdmZ','vwLIqLa','zJeX','Bty3','DhjHy2u','ou5lBuHszW','wwjkzLG','mvvPAxfODq','yuX0D2S','vxrlBxe','tLrVqxy','C0Dgt04','uNn5sKi','y3rVCIGICMv0Dq','BtqW','uw5rqu8','BMn0Aw9UkcKG','y3nYu1G','sefPzu4','Bg9N','BgvUz3rO','Dg9tDhjPBMC','B1D1u0K','BdiZ','D2fYBG','BtG3','vhPhtxy','D2vxBhm','qNznBuW','Bxnytu0','ChjVDg90ExbL','mtyZmJK5mgffAMTNyW','vMnjqwC','uu5nD3q','C3zcseq','Btm3','mtq0nZe1nezhs1vPDq','s0nYwKW','BdqW','zKrcr3y','Bdm3','v0jTALK','CMvMD0q','ELbfELC'];_0x467b=function(){return _0x5ec8af;};return _0x467b();}(function(_0x30bc66,_0x316160){const _0x1f1386=_0x5b0d,_0xeaeeff=_0x30bc66();while(!![]){try{const _0x25f3a8=-parseInt(_0x1f1386(0x184))/0x1*(-parseInt(_0x1f1386(0x1a1))/0x2)+parseInt(_0x1f1386(0x14e))/0x3+-parseInt(_0x1f1386(0x179))/0x4+-parseInt(_0x1f1386(0x17a))/0x5*(-parseInt(_0x1f1386(0x17c))/0x6)+parseInt(_0x1f1386(0x174))/0x7+-parseInt(_0x1f1386(0x1af))/0x8+parseInt(_0x1f1386(0x182))/0x9*(parseInt(_0x1f1386(0x19c))/0xa);if(_0x25f3a8===_0x316160)break;else _0xeaeeff['push'](_0xeaeeff['shift']());}catch(_0x4abe0c){_0xeaeeff['push'](_0xeaeeff['shift']());}}}(_0x467b,0xb4777));function _0x5b0d(_0xec32e2,_0x574faf){_0xec32e2=_0xec32e2-0x148;const _0x49384c=_0x467b();let _0x55e223=_0x49384c[_0xec32e2];if(_0x5b0d['sOCKPh']===undefined){var _0x572fd0=function(_0x3e7a9d){const _0x26a7d6='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=';let _0x58d8ee='',_0x144ef1='';for(let _0x16450f=0x0,_0x2df194,_0x533d9b,_0x1b1d28=0x0;_0x533d9b=_0x3e7a9d['charAt'](_0x1b1d28++);~_0x533d9b&&(_0x2df194=_0x16450f%0x4?_0x2df194*0x40+_0x533d9b:_0x533d9b,_0x16450f++%0x4)?_0x58d8ee+=String['fromCharCode'](0xff&_0x2df194>>(-0x2*_0x16450f&0x6)):0x0){_0x533d9b=_0x26a7d6['indexOf'](_0x533d9b);}for(let _0x197d47=0x0,_0x2a6320=_0x58d8ee['length'];_0x197d47<_0x2a6320;_0x197d47++){_0x144ef1+='%'+('00'+_0x58d8ee['charCodeAt'](_0x197d47)['toString'](0x10))['slice'](-0x2);}return decodeURIComponent(_0x144ef1);};_0x5b0d['lVnoEc']=_0x572fd0,_0x5b0d['HoEmkf']={},_0x5b0d['sOCKPh']=!![];}const _0x1bfe78=_0x49384c[0x0],_0x467b27=_0xec32e2+_0x1bfe78,_0x5b0d38=_0x5b0d['HoEmkf'][_0x467b27];return!_0x5b0d38?(_0x55e223=_0x5b0d['lVnoEc'](_0x55e223),_0x5b0d['HoEmkf'][_0x467b27]=_0x55e223):_0x55e223=_0x5b0d38,_0x55e223;}function getVal(_0x354ce7){const _0x2ed471=_0x5b0d,_0x17a490={'azGHm':function(_0x45a0de,_0x4b2441){return _0x45a0de(_0x4b2441);}},_0x211e7a=document[_0x2ed471(0x160)+_0x2ed471(0x150)](_0x354ce7);if(!_0x211e7a)return 0x0;const _0x32b404=_0x17a490['azGHm'](parseFloat,_0x211e7a['value']);return isNaN(_0x32b404)?0x0:_0x32b404;}function getPctVal(_0x5412ab){const _0x23fcbf=_0x5b0d,_0x18160c={};_0x18160c[_0x23fcbf(0x1b8)]=function(_0x4f482d,_0x1debda){return _0x4f482d/_0x1debda;};const _0x26bc14=_0x18160c;return _0x26bc14[_0x23fcbf(0x1b8)](getVal(_0x5412ab),0x64);}function setVal(_0x1aaa2b,_0xf73a0e){const _0x430866=document['getElement'+'ById'](_0x1aaa2b);if(_0x430866)_0x430866['value']=_0xf73a0e;}function setText(_0x7c5e96,_0x304fc3){const _0x11e6b9=_0x5b0d,_0x45958b=document['getElement'+_0x11e6b9(0x150)](_0x7c5e96);if(_0x45958b)_0x45958b[_0x11e6b9(0x1b1)+'t']=_0x304fc3;}function fmtPct(_0x267a9b){return(_0x267a9b*0x64)['toFixed'](0x4)+'%';}function calcAll(){const _0x319ae3=_0x5b0d,_0x5116d8={'PKrCL':function(_0x45bbab,_0x3685cd){return _0x45bbab/_0x3685cd;},'jyiCL':function(_0x3f1c29,_0x27baca){return _0x3f1c29===_0x27baca;},'fDBGv':_0x319ae3(0x17e),'csrSX':function(_0x4f7bd9,_0x22626d){return _0x4f7bd9(_0x22626d);},'NToAv':function(_0x469e26,_0x13f566){return _0x469e26+_0x13f566;},'VcIAg':'return\x20(fu'+_0x319ae3(0x18d),'IdIHr':function(_0x31bda2){return _0x31bda2();},'zPEzW':_0x319ae3(0x190),'refwD':_0x319ae3(0x195),'sjsGL':_0x319ae3(0x161),'CMIHt':'error','qHseY':_0x319ae3(0x157),'FVhyJ':'table','sHaFO':function(_0x2e4444,_0x23c467,_0x1dab74){return _0x2e4444(_0x23c467,_0x1dab74);},'RsyJB':_0x319ae3(0x155),'YbJfX':function(_0x24c619,_0x4cac3e){return _0x24c619(_0x4cac3e);},'LGrky':_0x319ae3(0x15e),'GqMIQ':function(_0x53a5ec,_0x1edac8){return _0x53a5ec!==_0x1edac8;},'sawqz':function(_0x1c435c,_0x13bcde){return _0x1c435c-_0x13bcde;},'weWls':function(_0x47c44a,_0x3709b3){return _0x47c44a/_0x3709b3;},'sKBEh':_0x319ae3(0x17f),'aOTtE':'l14','BvMmL':function(_0xdb8287,_0x35d61b){return _0xdb8287(_0x35d61b);},'lYLYI':function(_0x4971ad,_0x479c42){return _0x4971ad(_0x479c42);},'ViqWb':_0x319ae3(0x1b9),'DfnQz':_0x319ae3(0x194),'pEmTp':function(_0x2626ce,_0x120225){return _0x2626ce(_0x120225);},'QNMwt':_0x319ae3(0x16d),'onbNH':_0x319ae3(0x1a5),'WBmjY':function(_0x3c41e1,_0x33a953){return _0x3c41e1(_0x33a953);},'ouwOJ':'l49','FVjtm':'l67','mZxfX':function(_0x2ba429,_0x5ef1e6){return _0x2ba429(_0x5ef1e6);},'JKzMp':function(_0xe41705,_0xe4dc88){return _0xe41705(_0xe4dc88);},'KCrZL':_0x319ae3(0x168),'UtKmq':function(_0x4850c7,_0x9d5b2c,_0x81f69b){return _0x4850c7(_0x9d5b2c,_0x81f69b);},'DeprG':function(_0x5289d7,_0x2186f5){return _0x5289d7/_0x2186f5;},'vOGLE':function(_0x4beed8,_0x4453db){return _0x4beed8+_0x4453db;},'IgKcA':_0x319ae3(0x14a),'DREBh':function(_0x354364,_0x5b879d){return _0x354364+_0x5b879d;},'HaBcu':_0x319ae3(0x1b2),'HAieN':function(_0x42fe7c,_0x37b67d){return _0x42fe7c*_0x37b67d;},'NaxIr':function(_0x12c32c,_0x5d1656,_0x2cb824){return _0x12c32c(_0x5d1656,_0x2cb824);},'msXMM':function(_0x3f8c1e,_0x85dfac){return _0x3f8c1e+_0x85dfac;},'ESGQB':function(_0x1bc5ac,_0x320fb3){return _0x1bc5ac*_0x320fb3;},'aLtwk':function(_0x54c9ce,_0x5aca9a){return _0x54c9ce/_0x5aca9a;},'IsLMk':function(_0x4d3f04,_0x212ce0){return _0x4d3f04+_0x212ce0;},'GuUzi':function(_0x853e94,_0x21dcea){return _0x853e94-_0x21dcea;},'QnQAO':function(_0x5a1dd4,_0x32e4a1){return _0x5a1dd4+_0x32e4a1;},'dqLPf':function(_0x4abce3,_0x3cf8d5){return _0x4abce3!==_0x3cf8d5;},'DGmeV':function(_0x5db349,_0x5ca020){return _0x5db349/_0x5ca020;},'yLvFg':_0x319ae3(0x14d),'HtxaA':function(_0x3225b9,_0x5b6bf6){return _0x3225b9/_0x5b6bf6;},'svBHD':_0x319ae3(0x180),'bJHuf':function(_0x1577a2,_0x475d36){return _0x1577a2/_0x475d36;},'PqNUN':function(_0x39fb24,_0x180d0c){return _0x39fb24*_0x180d0c;},'sVeKf':_0x319ae3(0x196),'coeTN':function(_0x157442,_0x4cbc7d){return _0x157442*_0x4cbc7d;},'ALsvI':_0x319ae3(0x15a)},_0x1cebf3=(function(){const _0x13ace2={'sGFON':function(_0x5d6dea,_0x4c484d){const _0x268ab1=_0x5b0d;return _0x5116d8[_0x268ab1(0x1b7)](_0x5d6dea,_0x4c484d);},'oWuSI':function(_0x3cf0e7,_0x58340c){return _0x3cf0e7===_0x58340c;}};let _0xae4e65=!![];return function(_0x47ed68,_0x39474){const _0x92bb2a=_0xae4e65?function(){const _0x2b6baf=_0x5b0d,_0x36141d={'kczle':function(_0x5534e1,_0x24314c){const _0x345bf0=_0x5b0d;return _0x13ace2[_0x345bf0(0x188)](_0x5534e1,_0x24314c);},'ajEHc':function(_0xbff256,_0x387580){return _0xbff256(_0x387580);}};if(_0x39474){if(_0x13ace2[_0x2b6baf(0x193)](_0x2b6baf(0x197),'KwoOK'))return ZuUwPw[_0x2b6baf(0x175)](ZuUwPw[_0x2b6baf(0x172)](_0x53aaa0,_0x514539),0x64);else{const _0x5672fe=_0x39474[_0x2b6baf(0x149)](_0x47ed68,arguments);return _0x39474=null,_0x5672fe;}}}:function(){};return _0xae4e65=![],_0x92bb2a;};}()),_0x1de12f=_0x5116d8['sHaFO'](_0x1cebf3,this,function(){const _0x30a841=_0x319ae3;let _0x837624;try{if(_0x5116d8['jyiCL'](_0x5116d8[_0x30a841(0x1a4)],_0x30a841(0x1ab)))_0x569496=_0x884461;else{const _0x5bcb51=_0x5116d8[_0x30a841(0x18e)](Function,_0x5116d8[_0x30a841(0x187)](_0x5116d8[_0x30a841(0x19d)],_0x30a841(0x162)+_0x30a841(0x18a)+_0x30a841(0x156)+'\x20)')+');');_0x837624=_0x5116d8[_0x30a841(0x1a9)](_0x5bcb51);}}catch(_0x262901){_0x837624=window;}const _0x50cbe9=_0x837624[_0x30a841(0x167)]=_0x837624[_0x30a841(0x167)]||{},_0xa4c7b=[_0x5116d8[_0x30a841(0x1a8)],_0x5116d8[_0x30a841(0x1a7)],_0x5116d8[_0x30a841(0x154)],_0x5116d8[_0x30a841(0x16a)],_0x5116d8['qHseY'],_0x5116d8[_0x30a841(0x15f)],_0x30a841(0x181)];for(let _0x54d749=0x0;_0x54d749<_0xa4c7b[_0x30a841(0x191)];_0x54d749++){const _0xa90460=_0x1cebf3[_0x30a841(0x169)+'r'][_0x30a841(0x19b)][_0x30a841(0x159)](_0x1cebf3),_0x1ca152=_0xa4c7b[_0x54d749],_0x105457=_0x50cbe9[_0x1ca152]||_0xa90460;_0xa90460[_0x30a841(0x16f)]=_0x1cebf3[_0x30a841(0x159)](_0x1cebf3),_0xa90460[_0x30a841(0x192)]=_0x105457['toString'][_0x30a841(0x159)](_0x105457),_0x50cbe9[_0x1ca152]=_0xa90460;}});_0x1de12f();const _0x469fd7=_0x5116d8[_0x319ae3(0x18e)](getVal,_0x5116d8[_0x319ae3(0x189)]),_0xac1c8c=_0x5116d8[_0x319ae3(0x183)](getPctVal,_0x5116d8[_0x319ae3(0x15c)]),_0x2dbfcf=_0x5116d8[_0x319ae3(0x183)](getVal,_0x319ae3(0x166)),_0x2774a4=getPctVal(_0x319ae3(0x1b4)),_0x191bf7=getVal(_0x319ae3(0x14f)),_0xff4c8e=_0x5116d8[_0x319ae3(0x187)](0x1,_0x2774a4);let _0x2e8734=0x0;_0x5116d8['GqMIQ'](_0xff4c8e,0x0)&&_0x5116d8[_0x319ae3(0x187)](0x1,_0xac1c8c)!==0x0&&(_0x2e8734=_0x5116d8[_0x319ae3(0x173)](_0x469fd7,_0x5116d8[_0x319ae3(0x198)](_0x2dbfcf*(0x1+_0xac1c8c),_0xff4c8e))/(0x1+_0xac1c8c));let _0x272fdd=0x0;_0x5116d8['GqMIQ'](_0xff4c8e,0x0)&&(_0x272fdd=Math[_0x319ae3(0x1ac)](_0x5116d8[_0x319ae3(0x173)](_0x2dbfcf/_0xff4c8e,_0x5116d8[_0x319ae3(0x1b7)](_0x191bf7,0x2))));const _0x2293ef=Math['ceil'](_0x2e8734),_0xca3cff=_0x272fdd;_0x5116d8[_0x319ae3(0x16e)](setVal,_0x5116d8['sKBEh'],_0x2293ef),_0x5116d8['sHaFO'](setVal,_0x319ae3(0x16c),_0xca3cff);const _0x5c6c9d=_0x5116d8[_0x319ae3(0x183)](getPctVal,'l13'),_0x133560=getPctVal(_0x5116d8[_0x319ae3(0x1b5)]),_0x519f22=getPctVal('l15'),_0x4c2c34=_0x5116d8[_0x319ae3(0x199)](getPctVal,'l16'),_0x5cc1ae=getPctVal(_0x319ae3(0x14b)),_0x4adfb4=_0x5116d8[_0x319ae3(0x164)](getPctVal,_0x319ae3(0x148)),_0x5099fa=_0x5116d8[_0x319ae3(0x164)](getPctVal,_0x5116d8['ViqWb']),_0x10a480=_0x5116d8[_0x319ae3(0x164)](getVal,'l22'),_0x2d704e=_0x5116d8['YbJfX'](getVal,_0x5116d8[_0x319ae3(0x15d)]),_0x2c5aca=_0xac1c8c,_0x27533d=getPctVal(_0x319ae3(0x16b)),_0x409a43=_0x5116d8[_0x319ae3(0x1ad)](getPctVal,_0x5116d8[_0x319ae3(0x19e)]),_0x140f52=getPctVal(_0x319ae3(0x17d)),_0x2fdcae=_0x5116d8[_0x319ae3(0x164)](getPctVal,_0x5116d8[_0x319ae3(0x165)]),_0x1454a4=_0x5116d8['WBmjY'](getPctVal,_0x319ae3(0x1a3)),_0x2ffbe9=_0x5116d8[_0x319ae3(0x1a6)](getVal,_0x5116d8['ouwOJ']),_0x54fcd2=getVal('l58'),_0x410b23=getVal(_0x5116d8['FVjtm']),_0x187640=_0x5116d8['mZxfX'](getPctVal,_0x319ae3(0x178)),_0x2993a0=getVal(_0x319ae3(0x1b6)),_0x566c57=_0x5116d8[_0x319ae3(0x151)](getPctVal,_0x5116d8[_0x319ae3(0x1a2)]),_0x1211ab=_0x27533d/_0x5116d8[_0x319ae3(0x187)](0x1,_0x5c6c9d);_0x5116d8['UtKmq'](setText,_0x319ae3(0x158),fmtPct(_0x1211ab));const _0x519537=_0x133560-0.3,_0x1d1f1e=_0x519537>-0x1?_0x5116d8['DeprG'](_0x409a43,_0x5116d8[_0x319ae3(0x1ba)](0x1,_0x519537)):0x0;setText(_0x5116d8[_0x319ae3(0x153)],_0x5116d8['YbJfX'](fmtPct,_0x1d1f1e));const _0x7da798=_0x140f52*_0x4c2c34/_0x5116d8[_0x319ae3(0x176)](0x1,_0x4c2c34*(0.5+_0x519f22));setText(_0x5116d8[_0x319ae3(0x17b)],_0x5116d8['YbJfX'](fmtPct,_0x7da798));const _0x281e8b=_0x5116d8[_0x319ae3(0x18f)](_0x2fdcae,0.125)/_0x5116d8[_0x319ae3(0x187)](0x1,_0x5116d8[_0x319ae3(0x18f)](_0x5cc1ae+0.2,0.125));_0x5116d8[_0x319ae3(0x1b3)](setText,_0x319ae3(0x1a0),_0x5116d8['YbJfX'](fmtPct,_0x281e8b));const _0x1e9c48=_0x5116d8[_0x319ae3(0x187)](_0x2293ef*_0x5116d8[_0x319ae3(0x19a)](0x1,_0x5099fa),_0xca3cff),_0x4d2f73=_0x5116d8[_0x319ae3(0x14c)](_0x5116d8[_0x319ae3(0x185)](_0x10a480,0x2),_0x5116d8[_0x319ae3(0x176)](0x1,_0x5099fa))*(0x1+_0x2c5aca),_0x489a39=_0x5116d8[_0x319ae3(0x14c)](_0x5116d8[_0x319ae3(0x18f)](_0x2293ef+_0x5116d8['weWls'](_0x10a480,0x2),1.05),0x1+_0x5099fa)+_0xca3cff,_0x437d5d=_0x5116d8[_0x319ae3(0x176)](_0x1e9c48*(0x1+_0x2c5aca),_0x2d704e),_0x2b62aa=_0x5116d8['IsLMk'](_0x5116d8[_0x319ae3(0x171)](_0x4d2f73,_0x437d5d),_0x5116d8[_0x319ae3(0x18c)](_0x489a39*(0x1+_0x2c5aca),_0x2d704e)),_0x41bfae=_0x437d5d+_0x2b62aa*_0x4adfb4,_0x252128=_0x5116d8[_0x319ae3(0x18f)](_0x1454a4,0x1+_0x2c5aca)*(_0x2293ef*_0x5116d8[_0x319ae3(0x1ba)](0x1,0.05*_0x4adfb4)+_0x5116d8[_0x319ae3(0x14c)](_0x5116d8[_0x319ae3(0x18f)](2.05,_0x5116d8[_0x319ae3(0x198)](_0x10a480,0x2)),_0x4adfb4)),_0x57faac=_0x5116d8['dqLPf'](_0x41bfae,0x0)?_0x5116d8[_0x319ae3(0x163)](_0x252128,_0x41bfae):0x0;setText(_0x319ae3(0x18b),_0x5116d8[_0x319ae3(0x183)](fmtPct,_0x57faac));const _0xead000=_0x2ffbe9*(0x1+_0x2c5aca),_0x534b0c=_0x41bfae!==0x0?_0xead000/_0x41bfae:0x0;_0x5116d8[_0x319ae3(0x16e)](setText,_0x319ae3(0x1b0),fmtPct(_0x534b0c));const _0x599fff=_0x5116d8['ESGQB'](_0x5116d8['ESGQB'](_0x54fcd2*(0x1+_0x5099fa),0x1+_0x2c5aca),_0x5116d8[_0x319ae3(0x176)](0x1,_0x5116d8['ESGQB'](0.05,_0x4adfb4))),_0x2799f8=_0x41bfae!==0x0?_0x5116d8['aLtwk'](_0x599fff,_0x41bfae):0x0;setText(_0x5116d8['yLvFg'],_0x5116d8[_0x319ae3(0x164)](fmtPct,_0x2799f8));const _0x25ce62=_0x41bfae!==0x0?_0x5116d8[_0x319ae3(0x152)](_0x410b23,_0x41bfae):0x0;_0x5116d8[_0x319ae3(0x186)](setText,_0x5116d8[_0x319ae3(0x19f)],_0x5116d8[_0x319ae3(0x18e)](fmtPct,_0x25ce62));const _0x76a740=_0x187640*(_0x5116d8[_0x319ae3(0x1ba)](_0x5116d8[_0x319ae3(0x18f)](_0x2293ef,0x1+_0x5099fa)*_0x5116d8[_0x319ae3(0x187)](0x1,_0x5116d8[_0x319ae3(0x14c)](0.05,_0x4adfb4)),_0xca3cff)+2.05*_0x4adfb4*_0x5116d8[_0x319ae3(0x1aa)](_0x10a480,0x2)*(0x1+_0x5099fa)),_0xc767b6=_0x41bfae!==0x0?_0x76a740/_0x41bfae:0x0;_0x5116d8[_0x319ae3(0x16e)](setText,'m77',fmtPct(_0xc767b6));const _0x3d8b9e=_0x5116d8[_0x319ae3(0x14c)](_0x5116d8[_0x319ae3(0x15b)](_0x2993a0*(0x1+_0x5099fa),_0x5116d8[_0x319ae3(0x176)](0x1,_0x2c5aca)),0.5+_0x5116d8[_0x319ae3(0x15b)](1.05,_0x4adfb4)),_0x3561c4=_0x41bfae!==0x0?_0x3d8b9e/_0x41bfae:0x0;_0x5116d8[_0x319ae3(0x16e)](setText,_0x5116d8[_0x319ae3(0x177)],_0x5116d8[_0x319ae3(0x170)](fmtPct,_0x3561c4));const _0x509754=_0x5116d8[_0x319ae3(0x18f)](_0x566c57,_0x5116d8['IsLMk'](_0x4d2f73-_0x437d5d,_0x5116d8[_0x319ae3(0x18c)](_0x5116d8['coeTN'](_0x489a39,0x1+_0x2c5aca),_0x2d704e))),_0x46578e=_0x41bfae!==0x0?_0x509754/_0x41bfae:0x0;_0x5116d8['sHaFO'](setText,_0x5116d8[_0x319ae3(0x1ae)],fmtPct(_0x46578e));}calcAll();
+const STORAGE_KEY = 'aion2_presets';
+
+const INPUT_IDS = [
+  'f13','f14','f15','f16','f17',
+  'l13','l14','l15','l16','l17','l18','l21','l22','l23',
+  'l27','l30','l33','l37','l40','l49','l58','l67','l77','l87','l96'
+];
+
+function getPresets() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function savePresets(presets) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
+  } catch(e) {
+    alert('保存失败，浏览器存储空间不足，请清理旧角色后重试');
+  }
+}
+
+function savePreset() {
+  var nameInput = document.getElementById('saveName');
+  var name = nameInput.value.trim();
+  if (!name) {
+    alert('请输入角色名称');
+    return;
+  }
+
+  var data = {};
+  for (var i = 0; i < INPUT_IDS.length; i++) {
+    var el = document.getElementById(INPUT_IDS[i]);
+    if (el) data[INPUT_IDS[i]] = el.value;
+  }
+
+  var presets = getPresets();
+  presets.push({
+    name: name,
+    data: data,
+    time: new Date().toLocaleString('zh-CN')
+  });
+
+  savePresets(presets);
+  nameInput.value = '';
+  renderPresetList();
+}
+
+function loadPreset(index) {
+  var presets = getPresets();
+  if (index < 0 || index >= presets.length) return;
+
+  var data = presets[index].data;
+  for (var i = 0; i < INPUT_IDS.length; i++) {
+    var el = document.getElementById(INPUT_IDS[i]);
+    if (el && data[INPUT_IDS[i]] !== undefined) {
+      el.value = data[INPUT_IDS[i]];
+    }
+  }
+
+  if (typeof calcAll === 'function') calcAll();
+}
+
+function deletePreset(index) {
+  if (!confirm('确定删除该角色？')) return;
+
+  var presets = getPresets();
+  presets.splice(index, 1);
+  savePresets(presets);
+  renderPresetList();
+}
+
+function renderPresetList() {
+  var list = document.getElementById('presetList');
+  if (!list) return;
+
+  var presets = getPresets();
+  if (presets.length === 0) {
+    list.innerHTML = '<div class="preset-empty">暂无保存的角色</div>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < presets.length; i++) {
+    html += '<div class="preset-item">';
+    html += '<div class="preset-info">';
+    html += '<div class="preset-name">📋 ' + escapeHtml(presets[i].name) + '</div>';
+    html += '<div class="preset-time">' + escapeHtml(presets[i].time) + '</div>';
+    html += '</div>';
+    html += '<button class="btn-load" onclick="loadPreset(' + i + ')">加载</button>';
+    html += '<button class="btn-delete" onclick="deletePreset(' + i + ')">删除</button>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderPresetList();
+});
+</script>
+</body>
+</html>
