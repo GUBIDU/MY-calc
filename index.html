@@ -344,6 +344,19 @@ input.result { background: #1a2a1a; border-color: #4a7a4a; color: #7dff7d; font-
         <span class="note">后方增幅考虑打背时间打折</span>
       </div>
       <div class="form-row">
+        <label>打背率</label>
+        <span class="pct-wrap"><input type="number" id="l13d" class="yellow" value="100" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+      </div>
+      <div class="form-row">
+        <label>前方伤害增幅</label>
+        <span class="pct-wrap"><input type="number" id="l13c" class="yellow" value="0" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+        <span class="note">前方增幅考虑打头时间打折</span>
+      </div>
+      <div class="form-row">
+        <label>打头率</label>
+        <span class="pct-wrap"><input type="number" id="l13e" class="yellow" value="100" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
+      </div>
+      <div class="form-row">
         <label>强击</label>
         <span class="pct-wrap"><input type="number" id="l14" class="yellow" value="45.8" step="0.1" oninput="calcAll()"><span class="pct-suffix">%</span></span>
         <span class="note">计算中会扣除boss强击抵抗30%</span>
@@ -398,52 +411,57 @@ input.result { background: #1a2a1a; border-color: #4a7a4a; color: #7dff7d; font-
             <td class="benefit-val" id="m28">-</td>
           </tr>
           <tr>
-            <td>3. 强击</td>
+            <td>3. 前方伤害增幅</td>
+            <td><span class="pct-wrap"><input type="number" id="l29" class="yellow" value="0.3" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
+            <td class="benefit-val" id="m29">-</td>
+          </tr>
+          <tr>
+            <td>4. 强击</td>
             <td><span class="pct-wrap"><input type="number" id="l30" class="yellow" value="0.3" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
             <td class="benefit-val" id="m30">-</td>
           </tr>
           <tr>
-            <td>4. 暴击伤害增幅</td>
+            <td>5. 暴击伤害增幅</td>
             <td><span class="pct-wrap"><input type="number" id="l33" class="yellow" value="5.5" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
             <td class="benefit-val" id="m33">-</td>
           </tr>
           <tr>
-            <td>5. 多段打击</td>
+            <td>6. 多段打击</td>
             <td><span class="pct-wrap"><input type="number" id="l37" class="yellow" value="8.2" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
             <td class="benefit-val" id="m37">-</td>
           </tr>
           <tr>
-            <td>6. 武器伤害增幅</td>
+            <td>7. 武器伤害增幅</td>
             <td><span class="pct-wrap"><input type="number" id="l40" class="yellow" value="1" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
             <td class="benefit-val" id="m40">-</td>
           </tr>
           <tr>
-            <td>7. 额外攻击力</td>
+            <td>8. 额外攻击力</td>
             <td><input type="number" id="l49" class="yellow" value="30" step="1" oninput="calcAll()" style="width:90px"></td>
             <td class="benefit-val" id="m49">-</td>
           </tr>
           <tr>
-            <td>8. 装备攻击力</td>
+            <td>9. 装备攻击力</td>
             <td><input type="number" id="l58" class="yellow" value="32" step="1" oninput="calcAll()" style="width:90px"></td>
             <td class="benefit-val" id="m58">-</td>
           </tr>
           <tr>
-            <td>9. PVE攻击力</td>
+            <td>10. PVE攻击力</td>
             <td><input type="number" id="l67" class="yellow" value="30" step="1" oninput="calcAll()" style="width:90px"></td>
             <td class="benefit-val" id="m67">-</td>
           </tr>
           <tr>
-            <td>10. 攻击力增加%</td>
+            <td>11. 攻击力增加%</td>
             <td><span class="pct-wrap"><input type="number" id="l77" class="yellow" value="1" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
             <td class="benefit-val" id="m77">-</td>
           </tr>
           <tr>
-            <td>11. 最大攻击力</td>
+            <td>12. 最大攻击力</td>
             <td><input type="number" id="l87" class="yellow" value="30" step="1" oninput="calcAll()" style="width:90px"></td>
             <td class="benefit-val" id="m87">-</td>
           </tr>
           <tr>
-            <td>12. 完美</td>
+            <td>13. 完美</td>
             <td><span class="pct-wrap"><input type="number" id="l96" class="yellow" value="7.5" step="0.1" oninput="calcAll()" style="width:80px"><span class="pct-suffix">%</span></span></td>
             <td class="benefit-val" id="m96">-</td>
           </tr>
@@ -476,8 +494,8 @@ const STORAGE_KEY = 'aion2_presets';
 
 const INPUT_IDS = [
   'f13','f14','f15','f16','f17',
-  'l13','l13b','l14','l15','l16','l17','l18','l21','l22','l23',
-  'l27','l28','l30','l33','l37','l40','l49','l58','l67','l77','l87','l96'
+  'l13','l13b','l13c','l13d','l13e','l14','l15','l16','l17','l18','l21','l22','l23',
+  'l27','l28','l29','l30','l33','l37','l40','l49','l58','l67','l77','l87','l96'
 ];
 
 function getPresets() {
@@ -587,9 +605,17 @@ document.addEventListener('DOMContentLoaded', function() {
       _orig();
       var l13b = parseFloat(document.getElementById('l13b').value) / 100;
       var l28 = parseFloat(document.getElementById('l28').value) / 100;
-      if (!isNaN(l13b) && !isNaN(l28)) {
-        var m28 = l28 / (1 + l13b);
+      var l13d = parseFloat(document.getElementById('l13d').value) / 100;
+      if (!isNaN(l13b) && !isNaN(l28) && !isNaN(l13d)) {
+        var m28 = (l28 / (1 + l13b)) * l13d;
         document.getElementById('m28').textContent = (m28 * 100).toFixed(4) + '%';
+      }
+      var l13c = parseFloat(document.getElementById('l13c').value) / 100;
+      var l29 = parseFloat(document.getElementById('l29').value) / 100;
+      var l13e = parseFloat(document.getElementById('l13e').value) / 100;
+      if (!isNaN(l13c) && !isNaN(l29) && !isNaN(l13e)) {
+        var m29 = (l29 / (1 + l13c)) * l13e;
+        document.getElementById('m29').textContent = (m29 * 100).toFixed(4) + '%';
       }
     };
   }
